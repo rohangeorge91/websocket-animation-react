@@ -1,5 +1,5 @@
 import { configureStore, ThunkAction, Action, ThunkDispatch, AnyAction, Dispatch } from '@reduxjs/toolkit';
-import streamerReducer, { StreamerState } from './steamerReducer';
+import streamerReducer, { StreamerState } from './streamerReducer/steamerReducer';
 
 export const store = configureStore({
   reducer: {

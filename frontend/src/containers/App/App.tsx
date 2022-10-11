@@ -1,10 +1,12 @@
 import React, {useEffect} from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { ScoreBoard } from '../../components/scoreboard/ScoreBoard';
-import { selectStreamers, Streamer, update } from '../../stores/steamerReducer';
+import { selectStreamers, update } from '../../stores/streamerReducer/steamerReducer';
 import { DispatchInterface } from '../../stores/store';
 import makeSocket, { SocketInterface } from '../../utils/socket';
 import { makeWorker, WorkerInterface } from '../../utils/webworker';
+import { Streamer, StreamerData, StreamerWithRank } from '../../stores/streamerReducer/streamer';
+
 import './App.css';
 
 const { LIVE_UPDATE_URL, BROADCAST_CHANNEL } = require('../../utils/constant');
@@ -12,19 +14,24 @@ const { LIVE_UPDATE_URL, BROADCAST_CHANNEL } = require('../../utils/constant');
 let worker: WorkerInterface | null;
 let socket: SocketInterface | null;
 
-const sortStreams = (data: string) => {
+const processStreamersData = (data: string) => {
   const newData: Streamer[] = JSON.parse(data).data;
-  newData.sort((a: Streamer, b: Streamer) => (-1 * (a.score - b.score)))
-  return newData;
+  newData.sort((a: Streamer, b: Streamer) => (-1 * (a.score - b.score)));
+
+  const pickTopTen = newData.slice(0, 10).map((streamer, index) => ({ ...streamer, rank: index + 1}))
+  pickTopTen.sort((a: StreamerWithRank, b: StreamerWithRank) => (a.userID.localeCompare(b.userID)));
+  return {
+    streamers: newData,
+    topStreamer: pickTopTen
+  };
 };
 
-const dispatchStreamerUpdate = 
-  (dispatch: DispatchInterface) => 
-  (data: Streamer[]) => dispatch(update(data));
+const dispatchStreamerUpdate = (dispatch: DispatchInterface) => 
+  (data: StreamerData) => dispatch(update(data));
 
 const initializeWebWorkWithSocket = (dispatch: DispatchInterface) => {
   if (!worker) {
-    worker = makeWorker('sockets.ts', BROADCAST_CHANNEL, sortStreams, dispatchStreamerUpdate(dispatch));
+    worker = makeWorker('sockets.ts', BROADCAST_CHANNEL, processStreamersData, dispatchStreamerUpdate(dispatch));
     socket = makeSocket(LIVE_UPDATE_URL, BROADCAST_CHANNEL)
     socket.attach(window.self);
     console.info('initialized webworker');
@@ -47,7 +54,7 @@ const App = () => {
 
   return (
     <div>
-      <ScoreBoard users={streamState.steamers} />
+      <ScoreBoard users={streamState.topSteamers}/>
     </div>
   );
 }

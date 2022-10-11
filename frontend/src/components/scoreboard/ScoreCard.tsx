@@ -1,12 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-
-import { Streamer } from '../../stores/steamerReducer';
-import { useSmoothCount } from '../../utils/useSmoothCount';
+import { StreamerWithRank } from '../../stores/streamerReducer/streamer';
+import Score from './Score';
 
 const Card = styled.div({
 	transition: 'all 0.5s ease 0s',
-	backgroundColor: 'white',
 	position: 'absolute',
 	top: '100px',
 	left: '100px',
@@ -40,17 +38,8 @@ const UserPhoto = styled.div({
 	marginRight: '10px',
 })
 
-const Points = styled.div({
-	'&::after': {
-		content: '"pt"',
-		marginLeft: '5px',
-	},
-	minWidth: '120px',
-	textAlign: 'right'
-});
-
 export interface ScoreCardData {
-	user: Streamer,
+	user: StreamerWithRank,
 	key: string,
 	total: number,
 	rank: number
@@ -58,14 +47,6 @@ export interface ScoreCardData {
 
 export const ScoreCard = (props: ScoreCardData) => {
 	const { user, rank, total } = props;
-	const ref = useRef(null);
-	const finalScore = useSmoothCount({
-		ref: ref,
-		target: user.score,
-		duration: 3,
-		curve: [0, 0.99, 0.01, 1]
-	});
-
 	return (
 		<Card style={{ zIndex: (total - rank), transform: `translate(0, ${((rank - 1) * 60)}px)` }}>
 			<Rank>{rank}</Rank>
@@ -73,7 +54,7 @@ export const ScoreCard = (props: ScoreCardData) => {
 				<img src={`${user.picture}`} alt={`${user.displayName}'s Profile Pic`}/>
 			</UserPhoto>
 			<UserName>{user.displayName}</UserName>
-			<Points ref={ref}>{finalScore.current}</Points>
+			<Score points={user.score} />
 		</Card>
 	)
 }

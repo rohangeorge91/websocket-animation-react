@@ -13,6 +13,8 @@ export const makeWorker = (
 	const broadcastChannel = new BroadcastChannel(broadcastChannelStr);
 	const worker = new SharedWorker(workerFileName);
 	broadcastChannel.addEventListener('message', (e) => {
+		// NOTE: the process of message will happen on the worker and not on the main UI thread this should be a better
+		// design approach than stalling the UI thread with heavy operations.
 		const newData = processMessage(e.data);
 		dispatchFunction(newData)
 	});

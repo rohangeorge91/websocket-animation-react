@@ -1,20 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from './store';
+import { RootState } from '../store';
+import { Streamer, StreamerData, StreamerWithRank } from './streamer';
 
-export interface Streamer {
-	userID: string,
-	displayName: string,
-	picture: string | URL,
-	score: number
-}
 
 export interface StreamerState {
-	steamers: Streamer[];
+	topSteamers: StreamerWithRank[];
+	streamers: Streamer[],
 	status: 'idle' | 'loading' | 'failed';
 }
 
 const initialState: StreamerState = {
-	steamers: [],
+	topSteamers: [],
+	streamers: [],
 	status: 'idle',
 };
 
@@ -23,11 +20,13 @@ export const streamersSlice = createSlice({
 	initialState,
 	// The `reducers` field lets us define reducers and generate associated actions
 	reducers: {
-		update: (state, action: PayloadAction<Streamer[]>) => {
-			state.steamers = action.payload
+		update: (state, action: PayloadAction<StreamerData>, ) => {
+			const { topStreamer, streamers } = action.payload;
+			state.topSteamers = topStreamer;
+			state.streamers = streamers;
 		},
 		clear: (state) => {
-			state.steamers = initialState.steamers
+			state.topSteamers = initialState.topSteamers
 		},
 	},
 });
