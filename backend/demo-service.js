@@ -121,7 +121,7 @@ const processCommand = (command) => {
 			const newTime = parseInt((time + 100), 10);
 			return changeTime(returnSmaller(newTime, MAX_TIME));
 		}
-		case 'slowerby2': {
+		case 'slowerBy2': {
 			const newTime = parseInt((time * 2), 10);
 			return changeTime(returnSmaller(newTime, MAX_TIME));
 		}
@@ -129,7 +129,7 @@ const processCommand = (command) => {
 			const newTime = parseInt((time - 100), 10);
 			return changeTime(returnBigger(newTime, MIN_TIME));
 		}
-		case 'fasterby2': {
+		case 'fasterBy2': {
 			const newTime = parseInt((time / 2), 10);
 			return changeTime(returnBigger(newTime, MIN_TIME));
 		}
