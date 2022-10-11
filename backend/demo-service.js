@@ -1,13 +1,14 @@
 const { readData, writeData } = require('./utils/fileUtils.js')
 const { responseJSON } = require('./utils/responseUtils.js');
-const { stringOfData } = require('./utils/dataUtils.js');
+const { stringOfData, returnSmaller, returnBigger } = require('./utils/dataUtils.js');
 
 const listeners = [];
 
 const MIN_TIME = 1;
 const MAX_TIME = 10000;
+const DEFAULT_TIME = 1000;
 const LOOKUP_FILE = 'source-of-truth/data.json';
-let time = 1000;
+let time = DEFAULT_TIME;
 let processTimer = 0;
 
 const modifyWithRandomData = (oldData) => {
@@ -21,6 +22,21 @@ const modifyWithRandomData = (oldData) => {
 		}) : datum);
 	return newData;
 }
+
+const resetScoreData = () => {
+	const oldData = readScore();
+	const newData = oldData.map((datum, index) => ({ ...datum, score: 0 }));
+	writeData(LOOKUP_FILE, newData);
+	const timestamp = (new Date()).getTime();
+	listeners.forEach((user) => {
+		const websocket = user.websocket;
+		if (websocket?.send) {
+			websocket.send(stringOfData({ timestamp, data: newData }));
+		}
+	});
+	return responseJSON(200, 'reset user scores to 0');
+};
+	
 
 const readScore = () => readData(LOOKUP_FILE);
 
@@ -95,15 +111,27 @@ const processCommand = (command) => {
 			return start();
 		case 'stop':
 			return stop();
+		case 'resetScore':
+			return resetScoreData();
+		case 'resetTime':
+			return changeTime(DEFAULT_TIME);
 		case 'slowest':
 			return changeTime(MAX_TIME);
 		case 'slower': {
-			const newTime =parseInt((time * 2), 10);
-			return changeTime(newTime <= MAX_TIME ? newTime : MAX_TIME);
+			const newTime = parseInt((time + 100), 10);
+			return changeTime(returnSmaller(newTime, MAX_TIME));
+		}
+		case 'slowerby2': {
+			const newTime = parseInt((time * 2), 10);
+			return changeTime(returnSmaller(newTime, MAX_TIME));
 		}
 		case 'faster': {
+			const newTime = parseInt((time - 100), 10);
+			return changeTime(returnBigger(newTime, MIN_TIME));
+		}
+		case 'fasterby2': {
 			const newTime = parseInt((time / 2), 10);
-			return changeTime(newTime >= MIN_TIME ? newTime : MIN_TIME);
+			return changeTime(returnBigger(newTime, MIN_TIME));
 		}
 		case 'fastest':
 			return changeTime(MIN_TIME);
